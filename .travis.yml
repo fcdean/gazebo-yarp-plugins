@@ -2,71 +2,16 @@ language: cpp
 
 matrix:
   include:
-    - compiler: gcc
-      env: GAZEBO_YARP_PLUGINS_BUILD_TYPE=Debug USE_GAZEBO_ONEDOTNINE=TRUE
-    - compiler: gcc
-      env: GAZEBO_YARP_PLUGINS_BUILD_TYPE=Release USE_GAZEBO_THREE=TRUE
-    - compiler: clang
-      env: GAZEBO_YARP_PLUGINS_BUILD_TYPE=Debug USE_GAZEBO_THREE=TRUE
-    - compiler: clang
-      env: GAZEBO_YARP_PLUGINS_BUILD_TYPE=Release USE_GAZEBO_ONEDOTNINE=TRUE
-
+    - os: osx
+      compiler: clang
 
 before_script:
-  - sudo sh -c 'echo "deb http://packages.osrfoundation.org/gazebo/ubuntu precise main" > /etc/apt/sources.list.d/gazebo-latest.list'
-  - wget http://packages.osrfoundation.org/gazebo.key -O - | sudo apt-key add -
-  - sudo add-apt-repository -y ppa:robotology/ppa
-  - sudo apt-get update
-  - sudo apt-get install cmake
-  - sudo apt-get --force-yes install libace-dev
-  - if [ $USE_GAZEBO_THREE ]; then sudo apt-get install -qq libgazebo-dev libavcodec-dev libavformat-dev libswscale-dev; fi
-  - if [ $USE_GAZEBO_ONEDOTNINE ]; then sudo apt-get install -qq gazebo libtinyxml-dev libboost-system-dev; fi
-  # move to /home/travis/build/robotology/ directory
-  - cd ..
-  # install yarp
-  - git clone https://github.com/robotology/yarp
-  - cd yarp
-  - mkdir build
-  - cd build
-  - cmake -DCREATE_SHARED_LIBRARY:BOOL=ON -DYARP_USE_OPENCV:BOOL=OFF -DCMAKE_BUILD_TYPE=${GAZEBO_YARP_PLUGINS_BUILD_TYPE} ..
-  - make
-  - sudo make install
-  - sudo ldconfig
-  - cd ../..
-  # install robot-testing framework
-  - git clone https://github.com/robotology/robot-testing
-  - cd robot-testing
-  - mkdir build 
-  - cd build 
-  - cmake -DCMAKE_BUILD_TYPE=${GAZEBO_YARP_PLUGINS_BUILD_TYPE} ..
-  - make 
-  - cd ../..
-  # install icub-gazebo (for testing)
-  - git clone https://github.com/robotology-playground/icub-gazebo
-  - export GAZEBO_MODEL_PATH=${GAZEBO_MODEL_PATH}:/home/travis/build/robotology/icub-gazebo
-  # compile gazebo-yarp-plugins
-  - cd gazebo-yarp-plugins
-  - mkdir build
-  - cd build
-  - cmake -DCMAKE_BUILD_TYPE=${GAZEBO_YARP_PLUGINS_BUILD_TYPE} -DALLOW_IDL_GENERATION:BOOL=OFF ./..
-  - pwd
+    - brew update
+    - cp utilities/installation/brew/gazebo-yarp-plugins.rb `brew --prefix`/Library/Formula
+    - brew install --verbose gazebo-yarp-plugins
 
 script: 
-  - make
-  # set GAZEBO_PLUGIN_PATH for running the tests
-  - export GAZEBO_PLUGIN_PATH=${GAZEBO_PLUGIN_PATH}:/home/travis/build/robotology/gazebo-yarp-plugins/build
-  # launch yarpserver, gazebo and wait
-  - yarpserver & 
-  - gzserver ../../icub-gazebo/world/icub_fixed.world &
-  - sleep 10
-  # launch tests 
-  - ../../robot-testing/build/bin/robot-testing --from ../../robot-testing/app/iCubTest/test-gazebo.ini
-  - pkill gzserver
-  - pkill yarpserver
-  # test install/uninstall
-  - sudo make install
-  - sudo make uninstall
-
+    - echo "ok"
 notifications:
   email:
     - pegua1@gmail.com
